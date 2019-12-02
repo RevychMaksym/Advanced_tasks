@@ -19,12 +19,14 @@ int main(int argc, char** argv) {
   int* begin = obj1.begin();
   int* end = obj1.end();
   std::cout << *(begin + 1) << std::endl;
+  std::cout << obj1.getsize() << std::endl;
   obj1.erase(begin + 1);
   obj1.print();
   obj1.erase(begin + 1, begin + 5);
   obj1.print();
   std::cout << *(begin + 1) << std::endl;
   obj1.push_front(531);
+  obj1.print();
   std::cout << "Capacity: " << obj1.getcapacity() << std::endl;
   std::cout << "Size: " << obj1.getsize() << std::endl;
 
