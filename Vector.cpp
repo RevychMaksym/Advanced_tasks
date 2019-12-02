@@ -44,18 +44,6 @@ T& Vector<T>::operator[](size_t index) {
 }
 
 template <typename T>
-void Vector<T>::print() const {
-  if (_data != nullptr) {
-    for (size_t i = 0; i < _capacity; ++i) {
-      std::cout << _data[i] << " ";
-    }
-    std::cout << "\n";
-  } else {
-    std::cout << "Nullptr exception!" << std::endl;
-  }
-}
-
-template <typename T>
 Vector<T>::~Vector() {
   delete[] _data;
 }
