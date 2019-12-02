@@ -2,43 +2,29 @@
 
 template <typename T>
 Vector<T>::Vector(size_t size)
-    : _capacity(size) {
+    : _size(0), _capacity(size) {
   std::cout << "Size_t constructor!" << std::endl;
   _data = new T[_capacity]{};
-  _size = 0;
 }
 
 template <typename T>
-Vector<T>::Vector(const std::initializer_list<T>& init_list) {
+Vector<T>::Vector(const std::initializer_list<T>& init_list)
+    : _size(init_list.size()), _capacity(_size * 2) {
   std::cout << "Init_list constructor!" << std::endl;
-  _size = init_list.size();
-  _capacity = _size * 2;
-  _data = new T[_capacity];
-  T* begin = _data;
-  for (auto& value : init_list) {
-    *begin++ = value;
-  }
+  get_object(init_list.begin(), init_list.end());
 }
 
 template <typename T>
-Vector<T>::Vector(const T* begin, const T* const end) {
+Vector<T>::Vector(const T* begin, const T* const end)
+    : _size(std::distance(begin, end)), _capacity(_size * 2) {
   std::cout << "Array constructor" << std::endl;
-  _size = end - begin;
-  std::cout << "Size_ = " << _size << std::endl;
-  _capacity = _size * 2;
-  _data = new T[_capacity];
-  T* temp_begin = _data;
-  while (begin != end) {
-    *temp_begin++ = *begin++;
-  }
+  get_object(begin, end);
 }
 
 template <typename T>
-Vector<T>::Vector(const Vector<T>& object) {
-  _data = new T[object._size];
-  _size = object._size;
-  _capacity = object._capacity;
-  memcpy(_data, object._data, sizeof(T) * _size);
+Vector<T>::Vector(const Vector<T>& object)
+    : _size(object._size), _capacity(object._capacity) {
+  initialise_object(object);
 }
 
 template <typename T>
@@ -46,10 +32,9 @@ const Vector<T>& Vector<T>::operator=(const Vector<T>& object) {
   if (this == &object) {
     return *this;
   };
-  delete[] _data;
-  _data = new T[object._size];
   _size = object._size;
-  memcpy(_data, object._data, sizeof(T) * _size);
+  _capacity = object._capacity;
+  initialise_object(object);
   return *this;
 }
 
@@ -59,8 +44,26 @@ T& Vector<T>::operator[](size_t index) {
 }
 
 template <typename T>
+void Vector<T>::print() const {
+  if (_data != nullptr) {
+    for (size_t i = 0; i < _capacity; ++i) {
+      std::cout << _data[i] << " ";
+    }
+    std::cout << "\n";
+  } else {
+    std::cout << "Nullptr exception!" << std::endl;
+  }
+}
+
+template <typename T>
 Vector<T>::~Vector() {
   delete[] _data;
+}
+
+template <typename T>
+void Vector<T>::initialise_object(const Vector<T>& object) {
+  _data = new T[object._size];
+  memcpy(_data, object._data, sizeof(T) * _size);
 }
 
 template <typename T>
@@ -69,7 +72,6 @@ void Vector<T>::push_back(T value) {
     insert(value, _size);
   } else {
     std::cout << "Error push_back {value} failed!" << std::endl;
-    return;
   }
 }
 
@@ -100,47 +102,50 @@ size_t Vector<T>::insert(T value, size_t pos) {
 
 template <typename T>
 T* Vector<T>::erase(size_t pos) {
-  for (size_t counter = pos; counter <= _size; ++counter) {
-    _data[counter] = _data[counter + 1];
-  }
-  _data[_size] = {};
-  --_size;
-  return &(_data[pos]);
+  return eraser(&_data[pos], 1);
 }
 
 template <typename T>
 T* Vector<T>::erase(T* pos) {
   std::cout << "Erase T* pos" << std::endl;
-  T* temp_begin = pos;
-  std::cout << typeid(temp_begin).name() << std::endl;
-  while (pos < end()) {
-    *pos = *(pos + 1);
-    pos++;
-  }
-  return temp_begin;
+  return eraser(pos, 1);
 }
 
 template <typename T>
 T* Vector<T>::erase(T* _begin, T* _end) {
   std::cout << "Erase T* begin, T* end" << std::endl;
-  T* temp_begin = _begin;
-  size_t counter = _end - _begin;
-  std::cout << typeid(temp_begin).name() << std::endl;
-  while (_begin < end()) {
-    *_begin = *(_begin + counter);
-    _begin++;
+  return eraser(_begin, std::distance(_begin, _end));
+}
+
+template <typename T>
+T* Vector<T>::eraser(T* begin, size_t counter) {
+  T* temp_begin = begin;
+  while (begin < end()) {
+    *begin = *(begin + counter);
+    begin++;
   }
   return temp_begin;
 }
 
 template <typename T>
+void Vector<T>::get_object(const T* begin, const T* const end) {
+  _data = new T[_capacity];
+  T* temp_begin = _data;
+  while (begin != end) {
+    *temp_begin++ = *begin++;
+  }
+}
+
+template <typename T>
 T Vector<T>::back() const {
-  return _data[_size];
+  return _size;
 }
 
 template <typename T>
 T Vector<T>::front() const {
-  return _data[0];
+  if (_data != nullptr) {
+    return 0;
+  }
 }
 
 template <typename T>
@@ -155,43 +160,29 @@ T* Vector<T>::end() {
 
 template <typename T>
 void Vector<T>::resize(size_t new_size) {
-  if (_data != nullptr) {
-    if (new_size < _size) {
-      _capacity = new_size;
-      _size = new_size;
-      allocate_memory();
-    } else if (new_size > _capacity) {
-      _capacity = new_size;
-      allocate_memory();
-    }
-  } else {
+  if (_data == nullptr) {
     std::cout << "Resize Error #0001x1 - resizing failed! " << std::endl;
+    return;
   }
-}
+  if (new_size == _capacity) {
+    return;
+  }
 
-template <typename T>
-void Vector<T>::print() const {
-  if (_data != nullptr) {
-    for (size_t i = 0; i < _capacity; ++i) {
-      std::cout << _data[i] << " ";
-    }
-    std::cout << "\n";
-  } else {
-    std::cout << "Nullptr exception!" << std::endl;
+  if (new_size < _size) {
+    _size = new_size;
   }
+  _capacity = new_size;
+  allocate_memory();
 }
 
 template <typename T>
 void Vector<T>::clear() {
-  ~Vector();
+  delete[] _data;
 }
 
 template <typename T>
 bool Vector<T>::empty() const {
-  if (_size == 0) {
-    return true;
-  }
-  return false;
+  return _size == 0;
 }
 
 template <typename T>
